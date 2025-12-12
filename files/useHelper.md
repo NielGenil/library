@@ -1,6 +1,6 @@
 # useHelper()
 
-### `useHelper` is a custom React hook that provides commonly used utilities for your app, including authentication handling (isAuthenticated, isTokenValid, logout, hasPermission) and date/time formatting functions (formatDate, formatTimeMilitary, formattedDateTime).
+`useHelper` is a custom React hook that provides commonly used utilities for your app, including authentication handling (isAuthenticated, isTokenValid, logout, hasPermission) and date/time formatting functions (formatDate, formatTimeMilitary, formattedDateTime).
 
 ```js
 import { useState, useEffect } from "react";
