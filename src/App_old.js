@@ -3,19 +3,50 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
 
+function importAll(r) {
+  return r.keys().map((key) => ({
+    path: r(key),
+    name: key
+      .replace(/^.*[\\/]/, "")
+      .replace(/\.[a-f0-9]{20}\.md$/, "")
+      .replace(/\.md$/, ""),
+    fullName: key,
+  }));
+}
+
+// const files = importAll(require.context('./files', false, /\.md$/));
+
 function App() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [allFiles, setAllFiles] = useState([]);
+  const [results, setResults] = useState(files);
   const [fileContent, setFileContent] = useState("");
   const [selectedFile, setSelectedFile] = useState("");
-  const [sortOrder, setSortOrder] = useState("latest");
+  const [sortOrder, setSortOrder] = useState("latest"); // 'latest' or 'oldest'
+
+  // useEffect(() => {
+  //   handleSearch(query);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [sortOrder]);
+
+  // const handleSearch = (value) => {
+  //   setQuery(value);
+
+  //   let filtered = files.filter(file =>
+  //     file.name.toLowerCase().includes(value.toLowerCase())
+  //   );
+
+  //   filtered = filtered.sort((a, b) => {
+  //     if (sortOrder === "latest") return b.fullName.localeCompare(a.fullName);
+  //     else return a.fullName.localeCompare(b.fullName);
+  //   });
+
+  //   setResults(filtered);
+  // };
 
   const GITHUB_USERNAME = "NielGenil";
   const GITHUB_REPO = "library";
-  const GITHUB_DIR = "files";
+  const GITHUB_DIR = "files"; // folder where your .md files are stored
 
-  // Fetch all markdown files from GitHub
   useEffect(() => {
     fetch(
       `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_DIR}`
@@ -26,37 +57,20 @@ function App() {
           .filter((file) => file.name.endsWith(".md"))
           .map((file) => ({
             name: file.name.replace(".md", ""),
-            fullName: file.name,
             download_url: file.download_url,
           }));
 
-        // Save both original and filtered lists
-        setAllFiles(mdFiles);
         setResults(mdFiles);
       });
   }, []);
 
-  // Search + Sort logic
-  const handleSearch = (value) => {
-    setQuery(value);
+  // const handleFileClick = async (file) => {
+  //   setSelectedFile(file.name);
 
-    let filtered = allFiles.filter((file) =>
-      file.name.toLowerCase().includes(value.toLowerCase())
-    );
-
-    filtered = filtered.sort((a, b) => {
-      if (sortOrder === "latest") return b.fullName.localeCompare(a.fullName);
-      return a.fullName.localeCompare(b.fullName);
-    });
-
-    setResults(filtered);
-  };
-
-  // Re-run sorting when user switches sort order
-  useEffect(() => {
-    handleSearch(query);
-    // eslint-disable-next-line
-  }, [sortOrder]);
+  //   const response = await fetch(file.path);
+  //   const text = await response.text();
+  //   setFileContent(text);
+  // };
 
   const handleFileClick = async (file) => {
     setSelectedFile(file.name);
@@ -66,6 +80,7 @@ function App() {
     setFileContent(text);
   };
 
+  // Copy to clipboard function
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
       alert("Copied to clipboard!");
@@ -76,8 +91,6 @@ function App() {
     <div className="App">
       <header className="App-header">
         <p>Search for markdown files:</p>
-
-        {/* SEARCH INPUT */}
         <input
           type="text"
           value={query}
@@ -86,7 +99,6 @@ function App() {
           style={{ padding: "5px", marginBottom: "10px" }}
         />
 
-        {/* SORT BUTTONS */}
         <div style={{ marginBottom: "10px" }}>
           <button
             onClick={() => setSortOrder("latest")}
@@ -97,7 +109,6 @@ function App() {
           <button onClick={() => setSortOrder("oldest")}>Oldest</button>
         </div>
 
-        {/* FILE LIST */}
         <ul>
           {results.map((file, index) => (
             <li
@@ -110,7 +121,6 @@ function App() {
           ))}
         </ul>
 
-        {/* MARKDOWN VIEWER */}
         {selectedFile && (
           <div
             style={{ marginTop: "20px", textAlign: "left", maxWidth: "600px" }}
