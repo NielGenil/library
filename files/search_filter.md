@@ -76,8 +76,6 @@ const filteredPositions = useMemo(() => {
 
   return position.filter((pos) => {
     const searchableText = [
-      pos.department?.name,
-      pos.section?.name,
       pos.name,
     ]
       .filter(Boolean)
@@ -141,9 +139,7 @@ Instead of rendering the full dataset, we render the filtered result.
       ${positionId === pos.id ? "bg-blue-700 text-white" : ""}
     `}
   >
-    {pos.section
-      ? `${pos.department?.name} - ${pos.section?.name} - ${pos.name}`
-      : `${pos.department?.name} - ${pos.name}`}
+   {pos.name}
   </p>
 ))}
 ```
@@ -175,25 +171,10 @@ Rendered UI
 
 ---
 
-## 🚀 Optional Enhancements
-
-* 🔄 Debounced search (`useDebounce`)
-* 🎯 Highlight matched text
-* 🌐 Server-side filtering (for large datasets)
-* 🔍 Keyboard navigation
-
----
-
 ## 📌 Conclusion
 
 Using `useState`, `useQuery`, and `useMemo` together creates a **fast, clean, and scalable** search filter without additional API calls. This approach keeps UI state and server state properly separated and improves overall performance.
 
 ---
 
-If you want, I can also:
 
-* Convert this to **internal CMS documentation**
-* Add **TypeScript version**
-* Add **server-side search using Django + React Query**
-
-Just tell me 👍
