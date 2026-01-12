@@ -1,7 +1,3 @@
-Here’s a clean **Markdown-style documentation** you can directly use in your project README or internal docs.
-
----
-
 # 🔍 Making a Search Filter in React
 
 ### Using `useState`, `useQuery`, and `useMemo`
@@ -176,5 +172,6 @@ Rendered UI
 Using `useState`, `useQuery`, and `useMemo` together creates a **fast, clean, and scalable** search filter without additional API calls. This approach keeps UI state and server state properly separated and improves overall performance.
 
 ---
+
 
 
