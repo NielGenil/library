@@ -301,10 +301,15 @@ cd backend
 python manage.py startapp api
 ```
 
-Add to `INSTALLED_APPS`:
+Add to `INSTALLED_APPS` in `settings.py`:
 
 ```python
-'api',
+INSTALLED_APPS = [
+    ...
+    'rest_framework',
+    'corsheaders',
+    'api',
+]
 ```
 
 ### `api/views.py`
