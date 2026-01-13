@@ -1,8 +1,3 @@
-Below is a **complete, step-by-step Markdown guide** you can copy directly into your documentation.
-It covers **Django backend + React frontend (Vite) + Tailwind CSS**, using the exact `npm create vite@latest` flow you provided.
-
----
-
 # Django + React (Vite) + Tailwind CSS
 
 ### Step-by-Step Setup Guide
