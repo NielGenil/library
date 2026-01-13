@@ -244,6 +244,23 @@ export function useHelper() {
 
 ---
 
+## API call for `verifyTokenAPI`:
+```js
+export const verifyTokenAPI = async (token) => {
+  const response = await fetch(`${BASE_URL}/api/token/verify/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token }), // properly formatted
+  });
+
+  return await response.json();
+};
+```
+
+---
+
 ## Example Usage
 
 ```js
