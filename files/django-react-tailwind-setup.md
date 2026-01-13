@@ -96,7 +96,7 @@ django-admin --version
 ## 4️⃣ Create Django Project
 
 ```bash
-django-admin startproject config .
+django-admin startproject core .
 ```
 
 Run the server:
