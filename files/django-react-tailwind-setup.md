@@ -122,7 +122,7 @@ http://127.0.0.1:8000/
 pip install djangorestframework django-cors-headers
 ```
 
-Add to `config/settings.py`:
+Add to `core/settings.py`:
 
 ```python
 INSTALLED_APPS = [
@@ -334,7 +334,7 @@ urlpatterns = [
 ]
 ```
 
-### `config/urls.py`
+### `core/urls.py`
 
 ```python
 from django.urls import path, include
