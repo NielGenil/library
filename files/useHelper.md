@@ -1,6 +1,23 @@
+Great—this is a **big change** to `useHelper`, so your documentation should reflect that it now:
+
+* **Automatically refreshes tokens**
+* **Decodes JWT locally (no verify API call)**
+* **Schedules refresh before expiry**
+* **Exposes `markTokenInvalid()` for Axios interceptors**
+* **Manages token state internally (not just Cookies.get)**
+
+Below is a **clean updated `.md` file** you can replace your old documentation with.
+
+---
+
+# ✅ Updated `useHelper.md`
+
+````md
 # `useHelper()` Hook
 
-A reusable custom React hook that centralizes **authentication utilities**, **permission checks**, and **date/time formatting helpers**. This hook is designed to reduce duplication and provide a consistent set of helper functions across the application.
+A reusable custom React hook that centralizes **authentication lifecycle management**, **automatic JWT refresh**, **permission checks**, and **date/time formatting utilities**.
+
+This hook now **actively manages JWT expiration and refresh scheduling**, eliminating the need for manual token verification calls.
 
 ---
 
@@ -8,27 +25,34 @@ A reusable custom React hook that centralizes **authentication utilities**, **pe
 
 `useHelper()` provides:
 
-* Authentication state helpers
-* JWT token validation
-* Logout handling
-* Permission checking
-* Common date and time formatting utilities
+- Authentication state management
+- Automatic JWT refresh before expiration
+- Logout handling
+- Manual token invalidation (for Axios interceptors)
+- Permission checking helpers
+- Date and time formatting utilities
 
-It integrates with **React**, **TanStack Query**, **js-cookie**, and your backend token verification API.
+It integrates with:
+
+- React
+- js-cookie
+- jwt-decode
+- Axios
+- Django JWT refresh endpoint
 
 ---
 
 ## Dependencies
 
 ```bash
-npm install js-cookie @tanstack/react-query
-```
+npm install js-cookie jwt-decode axios
+````
 
 ```js
-import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
 import Cookies from "js-cookie";
-import { verifyTokenAPI } from "../api/api";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 ```
 
 ---
@@ -41,6 +65,7 @@ const {
   isTokenValid,
   token,
   logout,
+  markTokenInvalid,
   hasPermission,
   formatDate,
   formatTimeMilitary,
@@ -52,20 +77,31 @@ const {
 
 ## Returned Values
 
-### Authentication Utilities
+### 🔐 Authentication Utilities
 
-| Name              | Type                  | Description                                     |
-| ----------------- | --------------------- | ----------------------------------------------- |
-| `token`           | `string \| undefined` | JWT access token retrieved from cookies         |
-| `isAuthenticated` | `boolean`             | `true` if an access token exists                |
-| `isTokenValid`    | `boolean \| null`     | Token validation status (`null` while checking) |
-| `logout()`        | `() => void`          | Clears access and refresh tokens from cookies   |
+| Name                 | Type             | Description                                              |
+| -------------------- | ---------------- | -------------------------------------------------------- |
+| `token`              | `string \| null` | Current access token stored in state                     |
+| `isAuthenticated`    | `boolean`        | `true` if access token exists                            |
+| `isTokenValid`       | `boolean`        | Token validity state                                     |
+| `logout()`           | `() => void`     | Clears tokens and cancels refresh timers                 |
+| `markTokenInvalid()` | `() => void`     | Manually marks token invalid (used by Axios interceptor) |
 
 ---
 
-### Permission Utility
+### 🔄 Automatic Token Refresh
 
-#### `hasPermission(user, permission)`
+* Decodes JWT locally using `jwtDecode`
+* Calculates expiration time
+* Schedules refresh **1 minute before expiry**
+* Refreshes immediately if near expiry
+* Removes tokens if refresh fails
+
+---
+
+## Permission Utility
+
+### `hasPermission(user, permission)`
 
 Checks whether a user has a specific permission.
 
@@ -75,8 +111,8 @@ hasPermission(user, "user.add_user");
 
 **Parameters**
 
-* `user` – user object containing a `permissions` array
-* `permission` – permission codename to check
+* `user` – user object containing `permissions` array
+* `permission` – permission codename string
 
 **Returns**
 
@@ -84,11 +120,11 @@ hasPermission(user, "user.add_user");
 
 ---
 
-### Date & Time Utilities
+## Date & Time Utilities
 
-#### `formatDate(dateString)`
+### `formatDate(dateString)`
 
-Formats a date string into a human-readable format.
+Formats a date string into a readable format.
 
 ```js
 formatDate("2026-01-12");
@@ -97,25 +133,25 @@ formatDate("2026-01-12");
 
 ---
 
-#### `formatTimeMilitary(timeString)`
+### `formatTimeMilitary(timeString)`
 
-Converts a time string into **24-hour military format (HHMM)**.
+Converts time to **24-hour military format (HHMM)**.
 
 ```js
 formatTimeMilitary("2:30 PM");
 // → "1430"
 ```
 
-Supports both:
+Supports:
 
 * `HH:MM AM/PM`
-* `HH:MM:SS` (24-hour format)
+* `HH:MM:SS` (24-hour)
 
 ---
 
-#### `formattedDateTime(dateString)`
+### `formattedDateTime(dateString)`
 
-Formats a full datetime string including date and time.
+Formats full datetime strings.
 
 ```js
 formattedDateTime("2026-01-12T14:30:00");
@@ -126,115 +162,157 @@ formattedDateTime("2026-01-12T14:30:00");
 
 ## Internal Behavior
 
-### Token Validation Flow
+### 🔁 Token Lifecycle Flow
 
-* Reads the access token from cookies
-* Automatically verifies the token using `verifyTokenAPI`
-* Updates `isTokenValid` state based on API response
-* Falls back to `false` if verification fails or token is missing
-
-Token verification runs automatically on:
-
-* Initial mount
-* Token change
+1. Reads access token from cookies
+2. Decodes JWT to extract expiration time
+3. Schedules refresh **60 seconds before expiry**
+4. Calls `/api/token/refresh/`
+5. Updates cookie + React state
+6. Removes tokens if refresh fails or token is expired
 
 ---
 
 ## Full Implementation
 
 ```js
-import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
 import Cookies from "js-cookie";
-import { verifyTokenAPI } from "../api/api";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
+import { BASE_URL } from "../api/api";
 
 export function useHelper() {
-  const token = Cookies.get("access");
-  const [isTokenValid, setIsTokenValid] = useState(null);
-
-  const { mutateAsync: verifyToken } = useMutation({
-    mutationFn: verifyTokenAPI,
-  });
+  const [token, setToken] = useState(Cookies.get("access"));
+  const [isTokenValid, setIsTokenValid] = useState(true);
+  const refreshTimeoutRef = useRef(null);
+  const isRefreshingRef = useRef(false);
 
   useEffect(() => {
-    const checkToken = async () => {
-      if (!token) {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+
+    if (!token) {
+      setIsTokenValid(false);
+      return;
+    }
+
+    const refreshAccessToken = async () => {
+      if (isRefreshingRef.current) return;
+      isRefreshingRef.current = true;
+
+      const refreshToken = Cookies.get("refresh");
+      if (!refreshToken) {
+        setIsTokenValid(false);
+        isRefreshingRef.current = false;
+        return false;
+      }
+
+      try {
+        const response = await axios.post(`${BASE_URL}/api/token/refresh/`, {
+          refresh: refreshToken,
+        });
+
+        const newAccessToken = response.data.access;
+        Cookies.set("access", newAccessToken);
+        setToken(newAccessToken);
+        setIsTokenValid(true);
+        return true;
+      } catch (error) {
+        Cookies.remove("access");
+        Cookies.remove("refresh");
+        setToken(null);
+        setIsTokenValid(false);
+        return false;
+      } finally {
+        isRefreshingRef.current = false;
+      }
+    };
+
+    try {
+      const decoded = jwtDecode(token);
+      const expirationTime = decoded.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiry = expirationTime - currentTime;
+
+      if (timeUntilExpiry <= 0) {
+        Cookies.remove("access");
+        Cookies.remove("refresh");
+        setToken(null);
         setIsTokenValid(false);
         return;
       }
 
-      try {
-        const res = await verifyToken(token);
-        if (res?.code === "token_not_valid") {
-          setIsTokenValid(false);
-        } else {
-          setIsTokenValid(true);
-        }
-      } catch (error) {
-        setIsTokenValid(false);
+      const refreshTime = timeUntilExpiry - 60000;
+
+      if (refreshTime > 0) {
+        refreshTimeoutRef.current = setTimeout(refreshAccessToken, refreshTime);
+      } else {
+        refreshAccessToken();
       }
+    } catch {
+      Cookies.remove("access");
+      Cookies.remove("refresh");
+      setToken(null);
+      setIsTokenValid(false);
+    }
+
+    return () => {
+      if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     };
+  }, [token]);
 
-    checkToken();
-  }, [token, verifyToken]);
-
-  const isAuthenticated = Boolean(token);
+  const isAuthenticated = !!token;
 
   const logout = () => {
+    if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     Cookies.remove("access");
     Cookies.remove("refresh");
+    setToken(null);
+    setIsTokenValid(false);
   };
 
-  const hasPermission = (user, permission) => {
-    return user?.permissions?.includes(permission);
-  };
+  const markTokenInvalid = () => setIsTokenValid(false);
+
+  const hasPermission = (user, perm) => user?.permissions?.includes(perm);
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     if (isNaN(date)) return dateString;
-
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = date.toLocaleString("en-US", { month: "short" });
-    const year = date.getFullYear();
-
-    return `${day} ${month} ${year}`;
+    return date.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const formatTimeMilitary = (timeString) => {
     if (!timeString) return "";
     const date = new Date(`1970-01-01T${timeString}`);
-
-    const formatted = date.toLocaleTimeString("en-GB", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    return formatted.replace(":", "");
+    return date
+      .toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+      .replace(":", "");
   };
 
   const formattedDateTime = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     if (isNaN(date)) return dateString;
-
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = date.toLocaleString("en-US", { month: "short" });
-    const year = date.getFullYear();
-
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-
-    return `${day} ${month} ${year} at ${hours}${minutes}`;
+    return `${formatDate(dateString)} at ${formatTimeMilitary(
+      date.toTimeString().slice(0, 5)
+    )}`;
   };
 
   return {
-    token,
     isAuthenticated,
-    isTokenValid,
     logout,
+    isTokenValid,
+    token,
     hasPermission,
+    markTokenInvalid,
     formatDate,
     formatTimeMilitary,
     formattedDateTime,
@@ -244,19 +322,38 @@ export function useHelper() {
 
 ---
 
-## API call for `verifyTokenAPI`:
-```js
-export const verifyTokenAPI = async (token) => {
-  const response = await fetch(`${BASE_URL}/api/token/verify/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ token }), // properly formatted
-  });
+## Axios Integration
 
-  return await response.json();
+### `api.js`
+
+```js
+import axios from "axios";
+import Cookies from "js-cookie";
+
+let tokenInvalidCallback = null;
+export const setTokenInvalidCallback = (callback) => {
+  tokenInvalidCallback = callback;
 };
+
+const api = axios.create({ baseURL: BASE_URL });
+
+api.interceptors.request.use((config) => {
+  const token = Cookies.get("access");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401 && tokenInvalidCallback) {
+      tokenInvalidCallback();
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
 ```
 
 ---
@@ -265,20 +362,20 @@ export const verifyTokenAPI = async (token) => {
 
 ```js
 import { useHelper } from "../hooks/useHelper";
+import { setTokenInvalidCallback } from "../api/api";
 
-function Dashboard({ user }) {
-  const { isAuthenticated, isTokenValid, logout, hasPermission } = useHelper();
+function App() {
+  const { isAuthenticated, isTokenValid, logout, markTokenInvalid } = useHelper();
 
-  if (!isAuthenticated || isTokenValid === false) {
-    return <p>Please log in.</p>;
+  useEffect(() => {
+    setTokenInvalidCallback(markTokenInvalid);
+  }, []);
+
+  if (!isAuthenticated || !isTokenValid) {
+    return <Login />;
   }
 
-  return (
-    <div>
-      {hasPermission(user, "dashboard.view") && <DashboardContent />}
-      <button onClick={logout}>Logout</button>
-    </div>
-  );
+  return <Dashboard />;
 }
 ```
 
@@ -286,12 +383,29 @@ function Dashboard({ user }) {
 
 ## Notes & Best Practices
 
-* `isTokenValid` starts as `null`; always account for the loading state
-* Permission checks assume permissions are stored as strings in `user.permissions`
-* Date utilities safely fall back if an invalid date is provided
+* Token refresh is scheduled automatically—**no manual verify call needed**
+* Always call `setTokenInvalidCallback(markTokenInvalid)` once in your app root
+* `isTokenValid` should be checked before rendering protected routes
+* Logout clears timers to prevent memory leaks
 
 ---
 
 ## Summary
 
-`useHelper()` consolidates frequently used logic into a single, predictable API. It improves maintainability, enforces consistency, and simplifies authentication and formatting logic across your React application.
+`useHelper()` now acts as a **full JWT lifecycle manager** with proactive refresh, Axios integration, and permission utilities—providing a centralized and production-ready authentication helper for React applications.
+
+```
+
+---
+
+# ✅ If you want
+I can also:
+
+- Add **flow diagrams (Mermaid)** to the markdown  
+- Create a **README-friendly shorter version**  
+- Add **TypeScript types version of docs**  
+- Document **React ProtectedRoute example**  
+- Add **SSR-safe Next.js notes**  
+
+Just tell me your preferred style.
+```
