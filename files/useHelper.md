@@ -1,18 +1,3 @@
-Great—this is a **big change** to `useHelper`, so your documentation should reflect that it now:
-
-* **Automatically refreshes tokens**
-* **Decodes JWT locally (no verify API call)**
-* **Schedules refresh before expiry**
-* **Exposes `markTokenInvalid()` for Axios interceptors**
-* **Manages token state internally (not just Cookies.get)**
-
-Below is a **clean updated `.md` file** you can replace your old documentation with.
-
----
-
-# ✅ Updated `useHelper.md`
-
-````md
 # `useHelper()` Hook
 
 A reusable custom React hook that centralizes **authentication lifecycle management**, **automatic JWT refresh**, **permission checks**, and **date/time formatting utilities**.
