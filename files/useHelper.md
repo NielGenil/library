@@ -542,5 +542,5 @@ function App() {
 
 `useHelper()` now acts as a **full JWT lifecycle manager** with proactive refresh, Axios integration, and permission utilities—providing a centralized and production-ready authentication helper for React applications.
 
-```
+---
 
