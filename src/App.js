@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Search, FileText, Copy, Check, Moon, Sun } from "lucide-react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 function App() {
   const [query, setQuery] = useState("");
@@ -232,6 +234,7 @@ function App() {
                           const backtickMatch = rawContent.match(/^`+/);
                           const backtickCount = backtickMatch ? backtickMatch[0].length : 0;
                           
+                          // Inline code (single backtick)
                           if (backtickCount === 1 || inline) {
                             return (
                               <code 
@@ -243,25 +246,35 @@ function App() {
                             );
                           }
 
+                          // Code block with syntax highlighting
                           const match = /language-(\w+)/.exec(className || "");
-                          const language = match ? match[1] : "";
+                          const language = match ? match[1] : "text";
 
                           return (
                             <div className="relative group my-4">
-                              {language && (
-                                <div className={`${isDark ? 'bg-gray-900 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'} border border-b-0 rounded-t-md px-4 py-2 text-xs font-mono`}>
+                              {language && language !== "text" && (
+                                <div className={`${isDark ? 'bg-gray-900 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'} border border-b-0 rounded-t-md px-4 py-2 text-xs font-mono uppercase`}>
                                   {language}
                                 </div>
                               )}
                               <div className="relative">
-                                <pre className={`${isDark ? 'bg-gray-900 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-300 text-gray-800'} border ${language ? 'rounded-b-md' : 'rounded-md'} p-4 overflow-x-auto`}>
-                                  <code className="text-sm font-mono leading-relaxed">
-                                    {text}
-                                  </code>
-                                </pre>
+                                <SyntaxHighlighter
+                                  language={language}
+                                  style={isDark ? oneDark : oneLight}
+                                  customStyle={{
+                                    margin: 0,
+                                    borderRadius: language !== "text" ? '0 0 0.375rem 0.375rem' : '0.375rem',
+                                    fontSize: '0.875rem',
+                                    lineHeight: '1.7',
+                                  }}
+                                  showLineNumbers={text.split('\n').length > 5}
+                                  wrapLines={true}
+                                >
+                                  {text}
+                                </SyntaxHighlighter>
                                 <button
                                   onClick={() => copyToClipboard(text)}
-                                  className={`absolute top-2 right-2 p-2 ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-600 text-gray-300' : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-700'} border rounded-md opacity-0 group-hover:opacity-100 transition flex items-center gap-1.5 text-xs`}
+                                  className={`absolute top-2 right-2 p-2 ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-600 text-gray-300' : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-700'} border rounded-md opacity-0 group-hover:opacity-100 transition flex items-center gap-1.5 text-xs shadow-sm`}
                                 >
                                   {copied ? (
                                     <>
