@@ -84,24 +84,187 @@ const {
 
 ---
 
-## Permission Utility
+Here’s a **cleaned-up, professional, and grammatically correct version** of your documentation with clearer explanations and consistent formatting.
 
-### `hasPermission(user, permission)`
+---
+
+# ✅ Permission Utility Documentation
+
+## `hasPermission(user, permission)`
 
 Checks whether a user has a specific permission.
+
+### Example
 
 ```js
 hasPermission(user, "user.add_user");
 ```
 
-**Parameters**
+### Parameters
 
-* `user` – user object containing `permissions` array
-* `permission` – permission codename string
+| Name         | Type     | Description                                            |
+| ------------ | -------- | ------------------------------------------------------ |
+| `user`       | `Object` | User object that contains a `permissions` array        |
+| `permission` | `string` | Permission codename (e.g., `"auth.change_permission"`) |
 
-**Returns**
+### Returns
 
-* `boolean`
+| Type      | Description                                              |
+| --------- | -------------------------------------------------------- |
+| `boolean` | `true` if the user has the permission, otherwise `false` |
+
+---
+
+## 🧩 Sample Usage
+
+### 1️⃣ Hide UI Elements Based on Permissions
+
+Use `hasPermission` to conditionally render UI components.
+
+```js
+{hasPermission(user, "auth.change_permission") && (
+  <button className="submitButton" onClick={savePermissions}>
+    Save Permission
+  </button>
+)}
+```
+
+---
+
+### 2️⃣ Protect Routes Based on Permissions
+
+You can prevent users from accessing or being redirected to a page if they lack the required permission.
+
+---
+
+## 🔹 Step 1: Wrap the Router
+
+### `main.jsx`
+
+```js
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import RouterWrapper from "./RouterWrapper";
+
+const queryClient = new QueryClient();
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <RouterWrapper />
+    </QueryClientProvider>
+  </StrictMode>
+);
+```
+
+---
+
+## 🔹 Step 2: Define Protected Routes
+
+### `RouterWrapper.jsx`
+
+```js
+export default function RouterWrapper() {
+  const { user } = GetCurrentUser();
+
+  const router = createBrowserRouter([
+    {
+      path: "pay-slip",
+      element: (
+        <ProtectedRoute
+          userPermissions={user}
+          requiredPermission="payroll.add_payroll"
+        >
+          <PaySlipPage />
+        </ProtectedRoute>
+      ),
+    },
+  ]);
+
+  return <RouterProvider router={router} />;
+}
+```
+
+---
+
+## 🔹 Step 3: Fetch the Current User
+
+### `GetCurrentUser.jsx`
+
+```js
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "./useAuth";
+import { getCurrentUserAPI } from "../api/userAPI";
+
+export function GetCurrentUser() {
+  const { token } = useAuth();
+
+  const { data: user, isLoading, isError } = useQuery({
+    queryKey: ["user-data"],
+    queryFn: () => getCurrentUserAPI(token),
+    enabled: !!token, // Run only if a token exists
+  });
+
+  return { user, isLoading, isError };
+}
+```
+
+---
+
+## 🔹 Step 4: Create a Protected Route Component
+
+### `ProtectedRoute.jsx`
+
+```js
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import PermissionModal from "./PermissionModal";
+
+export default function ProtectedRoute({
+  userPermissions,
+  requiredPermission,
+  children,
+}) {
+  const { hasPermission } = useAuth();
+  const navigate = useNavigate();
+
+  if (!hasPermission(userPermissions, requiredPermission)) {
+    return <PermissionModal onClose={() => navigate(-1)} />;
+  }
+
+  return children;
+}
+```
+
+---
+
+## 🔹 Step 5: Permission Denied Modal
+
+### `PermissionModal.jsx`
+
+```js
+export default function PermissionModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
+      <div className="bg-white p-6 rounded-xl shadow-lg text-center max-w-sm w-full">
+        <h2 className="text-xl font-semibold text-red-600 mb-2">
+          You do not have access to this page.
+        </h2>
+        <p className="text-gray-600 mb-4">
+          Please contact the RDD team to request access.
+        </p>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+```
 
 ---
 
