@@ -144,8 +144,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 ```bash
 cd ..
-mkdir frontend
-cd frontend
 ```
 
 ---
