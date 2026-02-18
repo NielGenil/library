@@ -230,9 +230,26 @@ python manage.py runserver
 ## ✅ 1. Create Vite React Project
 
 ```bash
-npm create vite@latest frontend -- --template react
-cd frontend
-npm install
+npm create vite@latest
+```
+
+### Follow the steps
+``text
+│
+◇  Project name:
+│  frontend
+│
+◇  Select a framework:
+│  React
+│
+◇  Select a variant:
+│  JavaScript + SWC
+│
+◇  Use Vite 8 beta (Experimental)?:
+│  No
+│
+◇  Install with npm and start now?
+│  Yes
 ```
 
 ---
