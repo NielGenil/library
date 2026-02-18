@@ -20,14 +20,17 @@ npm install @tanstack/react-query
 
 Your app must be wrapped with `QueryClientProvider`:
 
+Update `src/main.jsx`
 ```jsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
-<QueryClientProvider client={queryClient}>
-  <App />
-</QueryClientProvider>;
+<StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>;
+</StrictMode>
 ```
 
 ---
