@@ -200,35 +200,24 @@ http://localhost:5173/
 Inside `frontend/react-demo`:
 
 ```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
-
-This creates:
-
-```text
-tailwind.config.js
-postcss.config.js
+npm install tailwindcss @tailwindcss/vite
 ```
 
 ---
 
-## 9️⃣ Configure Tailwind
+## 9️⃣ Configure the Vite plugin
 
-### `tailwind.config.js`
+### `vite.config.ts`
 
 ```js
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,jsx}",
+import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [
+    tailwindcss(),
   ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+})
 ```
 
 ---
@@ -238,9 +227,7 @@ export default {
 Edit `src/index.css`:
 
 ```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 ```
 
 ---
