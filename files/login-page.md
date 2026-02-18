@@ -234,7 +234,7 @@ npm create vite@latest
 ```
 
 ### Follow the steps
-``text
+```text
 │
 ◇  Project name:
 │  frontend
