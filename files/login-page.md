@@ -574,23 +574,11 @@ function LoginPage() {
 
   return (
     <main className="flex w-screen h-screen justify-center items-center bg-slate-100">
-      <div className="bg-white flex shadow-lg h-[60vh] w-[60vw]">
-        {/* SECTION 1 */}
-        <div className="hidden md:flex flex-1 bg-[url('/image/13077.jpg')] bg-cover bg-center items-center text-white">
-          <div className="m-4 flex flex-col gap-4 max-w-[350px]">
-            <h1 className="text-4xl font-semibold">Welcome to Website</h1>
-            <p>
-              This is a demo website created to showcase the project design and
-              functionality.
-            </p>
-          </div>
-        </div>
-
-        {/* SECTION 2 */}
+      <div className="bg-white flex shadow-lg w-[450px] h-[500px]">
         <form
           ref={loginRef}
           onSubmit={loginSubmit}
-          className="flex flex-col md:max-w-[400px] p-7 gap-6 justify-center items-center w-full"
+          className="flex flex-col p-7 gap-6 justify-center items-center w-full"
         >
           <section className="flex justify-center items-center">
             <h1 className="text-violet-950 text-2xl">User Login</h1>
