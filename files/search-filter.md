@@ -83,6 +83,31 @@ const filteredPositions = useMemo(() => {
 }, [position, search]);
 ```
 
+### If data is array use this:
+
+```jsx
+const { data: memberList } = useQuery({
+  queryKey: ["project-member"],
+  queryFn: () => getProjectMembersAPI(token, projectId),
+});
+
+const filteredMember = useMemo(() => {
+  const memberListData = Array.isArray(memberList?.members)
+    ? memberList?.members
+    : [];
+  if (!memberListData) return [];
+
+  return memberListData.filter((user) => {
+    const searchableText = [user.username]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchableText.includes(search.toLowerCase());
+  });
+}, [memberList, search]);
+```
+
 ### ✅ Why `useMemo`?
 
 * Improves performance
