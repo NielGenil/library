@@ -1,11 +1,12 @@
 # SQL Basic Commands — Reference Guide
 
-A concise reference for writing SQL queries, from simple data retrieval to multi-table joins and aggregations.
+A concise reference for writing SQL queries, from simple data retrieval to multi-table joins, aggregations, and database schema management.
 
 ---
 
 ## Table of Contents
 
+**Querying Data**
 1. [Selecting Data](#1-selecting-data)
 2. [Filtering with WHERE](#2-filtering-with-where)
 3. [Sorting and Limiting Results](#3-sorting-and-limiting-results)
@@ -15,6 +16,18 @@ A concise reference for writing SQL queries, from simple data retrieval to multi
 7. [Aggregate Functions](#7-aggregate-functions)
 8. [Grouping and Filtering Groups](#8-grouping-and-filtering-groups)
 9. [Query Execution Order](#9-query-execution-order)
+
+**Modifying Data**
+
+10. [Inserting Rows](#10-inserting-rows)
+11. [Updating Rows](#11-updating-rows)
+12. [Deleting Rows](#12-deleting-rows)
+
+**Managing Tables**
+
+13. [Creating Tables](#13-creating-tables)
+14. [Altering Tables](#14-altering-tables)
+15. [Dropping Tables](#15-dropping-tables)
 
 ---
 
@@ -233,6 +246,138 @@ JOIN table2
     ON table1.table1_id = table2.table2_id
 GROUP BY column1table1;
 ```
+
+---
+
+## 10. Inserting Rows
+
+Use `INSERT INTO` to add new rows to a table.
+
+```sql
+INSERT INTO myTable
+    (column1, column2)
+VALUES
+    ('text', 9);
+```
+
+> **Tip:** Always specify the column names explicitly. This makes your query resilient to future changes in the table's column order.
+
+---
+
+## 11. Updating Rows
+
+Use `UPDATE` to modify existing rows. Always pair it with a `WHERE` clause to avoid updating every row in the table.
+
+```sql
+UPDATE myTable
+SET column1 = 'text',
+    column2 = 2
+WHERE id = 5;
+```
+
+> **Warning:** Omitting the `WHERE` clause will update **all rows** in the table. Double-check your condition before running an `UPDATE`.
+
+---
+
+## 12. Deleting Rows
+
+Use `DELETE FROM` to remove rows from a table.
+
+```sql
+DELETE FROM myTable
+WHERE id = 3;
+```
+
+> **Warning:** Just like `UPDATE`, omitting `WHERE` will delete **every row** in the table. This action cannot be undone.
+
+---
+
+## 13. Creating Tables
+
+Use `CREATE TABLE` to define a new table and its columns.
+
+```sql
+CREATE TABLE IF NOT EXISTS myTable (
+    id      INTEGER PRIMARY KEY,
+    column1 TEXT,
+    column2 FLOAT
+);
+```
+
+> **Tip:** `IF NOT EXISTS` prevents an error if the table already exists — useful in setup scripts.
+
+### Data Types
+
+| Data Type | Description |
+|---|---|
+| `INTEGER`, `BOOLEAN` | Stores whole numbers. Booleans are often stored as `0` (false) or `1` (true). |
+| `FLOAT`, `DOUBLE`, `REAL` | Stores decimal/fractional numbers with varying levels of precision. |
+| `CHARACTER(n)`, `VARCHAR(n)` | Fixed or variable-length strings up to `n` characters. Longer values may be truncated. |
+| `TEXT` | Stores strings of any length. Less precise on storage efficiency than `VARCHAR`. |
+| `DATE`, `DATETIME` | Stores date and/or time values. Extra care is needed when handling timezones. |
+| `BLOB` | Stores raw binary data (e.g., images, files). Opaque to the database — metadata is required to retrieve it meaningfully. |
+
+### Column Constraints
+
+Constraints enforce rules on the data stored in a column.
+
+| Constraint | Description |
+|---|---|
+| `PRIMARY KEY` | Values must be unique and non-NULL. Uniquely identifies each row in the table. |
+| `AUTOINCREMENT` | Automatically assigns and increments an integer value on each new row insertion. Not supported in all databases. |
+| `UNIQUE` | Values must be unique across all rows, but unlike `PRIMARY KEY`, the column does not have to be the row identifier. |
+| `NOT NULL` | The column cannot store a `NULL` value — a value must always be provided. |
+| `CHECK (expression)` | Validates inserted values against a custom expression (e.g., `CHECK (age > 0)`). |
+| `FOREIGN KEY` | Ensures the value in this column matches a value in a column of another table, maintaining referential integrity. |
+
+**Example using constraints:**
+```sql
+CREATE TABLE IF NOT EXISTS employees (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    department TEXT,
+    salary     FLOAT CHECK (salary > 0),
+    dept_id    INTEGER FOREIGN KEY REFERENCES departments(id)
+);
+```
+
+---
+
+## 14. Altering Tables
+
+Use `ALTER TABLE` to modify the structure of an existing table.
+
+**Add a new column:**
+```sql
+ALTER TABLE myTable
+ADD COLUMN column3 FLOAT DEFAULT 3.30;
+```
+
+**Rename the table:**
+```sql
+ALTER TABLE myTable
+RENAME TO new_table_name;
+```
+
+**Delete a column:**
+```sql
+ALTER TABLE myTable
+DROP COLUMN column2;
+```
+
+> **Note:** Not all databases support every `ALTER TABLE` operation (e.g., `DROP COLUMN` is unsupported in older versions of SQLite). Check your database's documentation when in doubt.
+
+---
+
+## 15. Dropping Tables
+
+Use `DROP TABLE` to permanently delete a table and all of its data.
+
+```sql
+DROP TABLE IF EXISTS myTable;
+```
+
+> **Warning:** This is irreversible. `IF EXISTS` prevents an error if the table doesn't exist, but the data cannot be recovered once dropped.
 
 ---
 
